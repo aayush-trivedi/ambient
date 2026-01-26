@@ -9,6 +9,7 @@ import { Room } from '@/lib/supabase/types'
 import { RoomTile } from '@/components/room-tile'
 import { CreateRoomModal } from '@/components/create-room-modal'
 import { useRoomPresence } from '@/lib/hooks/use-room-presence'
+import { useTabStore } from '@/lib/stores/tab-store'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const { addTab } = useTabStore()
 
   const roomIds = rooms.map((r) => r.id)
   const presence = useRoomPresence(roomIds)
@@ -36,14 +38,12 @@ export default function Dashboard() {
     const supabase = createClient()
 
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push('/')
-      } else {
+      if (user) {
         setUser(user)
         fetchRooms().then(() => setLoading(false))
       }
     })
-  }, [router, fetchRooms])
+  }, [fetchRooms])
 
   const createRoom = async (name: string) => {
     if (!user) return
@@ -69,8 +69,15 @@ export default function Dashboard() {
     }
   }
 
-  const joinRoom = (roomId: string) => {
-    router.push(`/room/${roomId}`)
+  const joinRoom = (room: Room) => {
+    // Add tab for this room
+    addTab({
+      id: `room-${room.id}`,
+      title: room.name,
+      type: 'room',
+      roomId: room.id,
+    })
+    router.push(`/room/${room.id}`)
   }
 
   const signOut = async () => {
@@ -81,7 +88,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-stone-700 border-t-white rounded-full animate-spin" />
       </div>
     )
@@ -90,7 +97,7 @@ export default function Dashboard() {
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there'
 
   return (
-    <div className="min-h-screen bg-black p-6">
+    <div className="h-full overflow-y-auto p-6">
       {/* Header */}
       <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
         <div>
@@ -137,7 +144,7 @@ export default function Dashboard() {
                 id={room.id}
                 name={room.name}
                 participants={presence[room.id] || []}
-                onJoin={() => joinRoom(room.id)}
+                onJoin={() => joinRoom(room)}
                 onDelete={() => deleteRoom(room.id)}
               />
             ))}

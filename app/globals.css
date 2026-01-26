@@ -18,3 +18,12 @@ body {
 video {
   object-fit: cover;
 }
+
+/* Scrollbar hiding for tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

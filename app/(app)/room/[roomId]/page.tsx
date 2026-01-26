@@ -1,21 +1,23 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Copy, Check, Users, ArrowLeft } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import { Copy, Check, Users } from 'lucide-react'
 import { VideoGrid } from '@/components/video-grid'
 import { AmbientPeer, ConnectionState } from '@/lib/peer'
 import { createClient } from '@/lib/supabase/client'
 import { RealtimeChannel, User } from '@supabase/supabase-js'
-import { PresenceState } from '@/lib/supabase/types'
+import { PresenceState, Room } from '@/lib/supabase/types'
 import { dedupeParticipants } from '@/lib/utils'
+import { useTabStore } from '@/lib/stores/tab-store'
 
 export default function RoomPage() {
   const params = useParams()
-  const router = useRouter()
   const roomId = params.roomId as string
+  const { addTab, updateTabTitle, tabs } = useTabStore()
 
   const [user, setUser] = useState<User | null>(null)
+  const [room, setRoom] = useState<Room | null>(null)
   const [state, setState] = useState<ConnectionState>('disconnected')
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
@@ -25,13 +27,38 @@ export default function RoomPage() {
   const peerRef = useRef<AmbientPeer | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
-  // Get user on mount
+  // Get user and room info on mount
   useEffect(() => {
     const supabase = createClient()
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
     })
-  }, [])
+
+    // Fetch room details
+    supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setRoom(data)
+          // Add/update tab with room name
+          const existingTab = tabs.find((t) => t.roomId === roomId)
+          if (existingTab) {
+            updateTabTitle(existingTab.id, data.name)
+          } else {
+            addTab({
+              id: `room-${roomId}`,
+              title: data.name,
+              type: 'room',
+              roomId: roomId,
+            })
+          }
+        }
+      })
+  }, [roomId, addTab, updateTabTitle, tabs])
 
   // Set up presence channel
   useEffect(() => {
@@ -115,12 +142,8 @@ export default function RoomPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const goBack = () => {
-    router.push('/dashboard')
-  }
-
   return (
-    <div className="relative w-full h-screen bg-black">
+    <div className="relative w-full h-full bg-black">
       <VideoGrid
         localStream={localStream}
         remoteStream={remoteStream}
@@ -129,55 +152,43 @@ export default function RoomPage() {
       />
 
       {/* Top bar */}
-      <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
-        {/* Back button */}
+      <div className="absolute top-6 right-6 flex items-center gap-3">
+        {/* Participants */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-stone-950 rounded-3xl border border-stone-800">
+          {participants.length > 0 ? (
+            <div className="flex -space-x-2">
+              {participants.slice(0, 3).map((p, i) => (
+                <img
+                  key={`${p.user_id}-${i}`}
+                  src={p.user_avatar}
+                  alt={p.user_name}
+                  className="w-6 h-6 rounded-full border-2 border-stone-950 object-cover"
+                />
+              ))}
+            </div>
+          ) : (
+            <Users className="w-4 h-4 text-stone-400" />
+          )}
+          <span className="text-sm text-stone-400">{participants.length}</span>
+        </div>
+
+        {/* Copy link */}
         <button
-          onClick={goBack}
+          onClick={copyLink}
           className="flex items-center gap-2 px-4 py-2 bg-stone-950 hover:border-stone-700 rounded-3xl border border-stone-800 text-white transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Back</span>
+          {copied ? (
+            <>
+              <Check className="w-4 h-4 text-green-400" />
+              <span className="text-sm">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-4 h-4" />
+              <span className="text-sm">Copy link</span>
+            </>
+          )}
         </button>
-
-        {/* Right side controls */}
-        <div className="flex items-center gap-3">
-          {/* Participants */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-stone-950 rounded-3xl border border-stone-800">
-            {participants.length > 0 ? (
-              <div className="flex -space-x-2">
-                {participants.slice(0, 3).map((p, i) => (
-                  <img
-                    key={`${p.user_id}-${i}`}
-                    src={p.user_avatar}
-                    alt={p.user_name}
-                    className="w-6 h-6 rounded-full border-2 border-stone-950 object-cover"
-                  />
-                ))}
-              </div>
-            ) : (
-              <Users className="w-4 h-4 text-stone-400" />
-            )}
-            <span className="text-sm text-stone-400">{participants.length}</span>
-          </div>
-
-          {/* Copy link */}
-          <button
-            onClick={copyLink}
-            className="flex items-center gap-2 px-4 py-2 bg-stone-950 hover:border-stone-700 rounded-3xl border border-stone-800 text-white transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-green-400" />
-                <span className="text-sm">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                <span className="text-sm">Copy link</span>
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </div>
   )

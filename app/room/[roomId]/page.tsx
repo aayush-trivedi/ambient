@@ -8,6 +8,7 @@ import { AmbientPeer, ConnectionState } from '@/lib/peer'
 import { createClient } from '@/lib/supabase/client'
 import { RealtimeChannel, User } from '@supabase/supabase-js'
 import { PresenceState } from '@/lib/supabase/types'
+import { dedupeParticipants } from '@/lib/utils'
 
 export default function RoomPage() {
   const params = useParams()
@@ -44,7 +45,7 @@ export default function RoomPage() {
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<PresenceState>()
-        const allParticipants = Object.values(state).flat()
+        const allParticipants = dedupeParticipants(Object.values(state).flat())
         setParticipants(allParticipants)
       })
       .subscribe(async (status) => {
@@ -144,9 +145,9 @@ export default function RoomPage() {
           <div className="flex items-center gap-2 px-4 py-2 bg-stone-950 rounded-3xl border border-stone-800">
             {participants.length > 0 ? (
               <div className="flex -space-x-2">
-                {participants.slice(0, 3).map((p) => (
+                {participants.slice(0, 3).map((p, i) => (
                   <img
-                    key={p.user_id}
+                    key={`${p.user_id}-${i}`}
                     src={p.user_avatar}
                     alt={p.user_name}
                     className="w-6 h-6 rounded-full border-2 border-stone-950 object-cover"

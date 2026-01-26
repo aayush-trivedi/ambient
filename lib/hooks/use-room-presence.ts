@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { PresenceState } from '@/lib/supabase/types'
+import { dedupeParticipants } from '@/lib/utils'
 
 export function useRoomPresence(roomIds: string[]) {
   const [presence, setPresence] = useState<Record<string, PresenceState[]>>({})
@@ -22,7 +23,7 @@ export function useRoomPresence(roomIds: string[]) {
       channel
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState<PresenceState>()
-          const participants = Object.values(state).flat()
+          const participants = dedupeParticipants(Object.values(state).flat())
           setPresence((prev) => ({ ...prev, [roomId]: participants }))
         })
         .subscribe()

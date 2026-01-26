@@ -42,7 +42,7 @@ export function RoomTile({ id, name, participants, onJoin, onDelete }: RoomTileP
       <div className="flex -space-x-2">
         {participants.slice(0, 5).map((p, i) => (
           <img
-            key={p.user_id}
+            key={`${p.user_id}-${i}`}
             src={p.user_avatar}
             alt={p.user_name}
             title={p.user_name}

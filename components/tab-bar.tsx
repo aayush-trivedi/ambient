@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Search } from 'lucide-react'
+import { X, Search, Plus } from 'lucide-react'
 import { useTabStore, Tab } from '@/lib/stores/tab-store'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -47,6 +47,16 @@ export function TabBar() {
   const avatarUrl = user?.user_metadata?.avatar_url
   const userName = user?.user_metadata?.full_name || 'User'
 
+  const handleNewTab = () => {
+    const newTabId = `dashboard-${Date.now()}`
+    useTabStore.getState().addTab({
+      id: newTabId,
+      title: 'Dashboard',
+      type: 'dashboard',
+    })
+    router.push('/dashboard')
+  }
+
   return (
     <div className="flex items-center gap-4 px-4 py-3">
       {/* Tabs - takes up most space */}
@@ -83,8 +93,8 @@ export function TabBar() {
                 />
               </div>
 
-              {/* Close button (not for dashboard) */}
-              {tab.type !== 'dashboard' && (
+              {/* Close button (show when more than 1 tab) */}
+              {tabs.length > 1 && (
                 <div className="relative flex-shrink-0 w-3 h-3">
                   <button
                     onClick={(e) => handleCloseTab(e, tab.id)}
@@ -104,8 +114,16 @@ export function TabBar() {
         })}
       </div>
 
-      {/* Right side - Search and Profile */}
+      {/* Right side - Plus, Search and Profile */}
       <div className="flex items-center gap-0.5 flex-shrink-0">
+        {/* New tab button */}
+        <button
+          className="w-7 h-7 flex items-center justify-center text-white rounded-full border border-transparent hover:border-stone-700 transition-colors duration-150"
+          onClick={handleNewTab}
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+
         {/* Search button */}
         <button
           className="w-7 h-7 flex items-center justify-center text-white rounded-full border border-transparent hover:border-stone-700 transition-colors duration-150"

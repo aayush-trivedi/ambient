@@ -40,7 +40,9 @@ export const useTabStore = create<TabStore>()(
 
       removeTab: (tabId) => {
         const { tabs, activeTabId } = get()
-        if (tabId === 'dashboard') return // Can't close dashboard
+
+        // Can't close the last tab
+        if (tabs.length <= 1) return
 
         const newTabs = tabs.filter((t) => t.id !== tabId)
         const wasActive = activeTabId === tabId
@@ -48,7 +50,7 @@ export const useTabStore = create<TabStore>()(
         set({
           tabs: newTabs,
           activeTabId: wasActive
-            ? newTabs[newTabs.length - 1]?.id || 'dashboard'
+            ? newTabs[newTabs.length - 1]?.id
             : activeTabId,
         })
       },

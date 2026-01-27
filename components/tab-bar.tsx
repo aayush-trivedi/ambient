@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Search, Plus } from 'lucide-react'
+import { X, Plus } from 'lucide-react'
 import { useTabStore, Tab } from '@/lib/stores/tab-store'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -114,7 +114,7 @@ export function TabBar() {
         })}
       </div>
 
-      {/* Right side - Plus, Search and Profile */}
+      {/* Right side - Plus and Profile */}
       <div className="flex items-center gap-0.5 flex-shrink-0">
         {/* New tab button */}
         <button
@@ -122,14 +122,6 @@ export function TabBar() {
           onClick={handleNewTab}
         >
           <Plus className="h-4 w-4" />
-        </button>
-
-        {/* Search button */}
-        <button
-          className="w-7 h-7 flex items-center justify-center text-white rounded-full border border-transparent hover:border-stone-700 transition-colors duration-150"
-          onClick={() => {/* TODO: search modal */}}
-        >
-          <Search className="h-4 w-4" />
         </button>
 
         {/* Profile avatar */}

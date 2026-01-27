@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { Room } from '@/lib/supabase/types'
 import { RoomTile } from '@/components/room-tile'
 import { CreateRoomModal } from '@/components/create-room-modal'
@@ -17,10 +17,16 @@ export default function Dashboard() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const { addTab } = useTabStore()
 
   const roomIds = rooms.map((r) => r.id)
   const presence = useRoomPresence(roomIds)
+
+  // Filter rooms by search query
+  const filteredRooms = rooms.filter((room) =>
+    room.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const fetchRooms = useCallback(async () => {
     const supabase = createClient()
@@ -90,9 +96,18 @@ export default function Dashboard() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold text-white">Rooms</h1>
+        {/* Search header */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-stone-500" />
+            <input
+              type="text"
+              placeholder="Search rooms"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-white placeholder-stone-500 outline-none pl-10 text-lg"
+            />
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
             className="w-7 h-7 flex items-center justify-center text-white rounded-full border border-transparent hover:border-stone-700 transition-colors duration-150"
@@ -112,9 +127,13 @@ export default function Dashboard() {
               Create your first room
             </button>
           </div>
+        ) : filteredRooms.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-stone-500">No rooms found</p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {rooms.map((room) => (
+            {filteredRooms.map((room) => (
               <RoomTile
                 key={room.id}
                 id={room.id}

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { Plus, LogOut } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Room } from '@/lib/supabase/types'
 import { RoomTile } from '@/components/room-tile'
 import { CreateRoomModal } from '@/components/create-room-modal'
@@ -70,7 +70,6 @@ export default function Dashboard() {
   }
 
   const joinRoom = (room: Room) => {
-    // Add tab for this room
     addTab({
       id: `room-${room.id}`,
       title: room.name,
@@ -78,12 +77,6 @@ export default function Dashboard() {
       roomId: room.id,
     })
     router.push(`/room/${room.id}`)
-  }
-
-  const signOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/')
   }
 
   if (loading) {
@@ -94,46 +87,29 @@ export default function Dashboard() {
     )
   }
 
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there'
-
   return (
     <div className="h-full overflow-y-auto p-6">
-      {/* Header */}
-      <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Hey, {firstName}</h1>
-          <p className="text-stone-500 mt-1">Your rooms</p>
-        </div>
-
-        <div className="flex items-center gap-3">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-semibold text-white">Rooms</h1>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-stone-950 hover:border-stone-700 rounded-2xl border border-stone-800 text-white transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-white rounded-full border border-transparent hover:border-stone-700 transition-colors duration-150"
           >
-            <Plus className="w-4 h-4" />
-            <span>New room</span>
-          </button>
-
-          <button
-            onClick={signOut}
-            className="p-2 rounded-2xl hover:bg-stone-950 transition-colors"
-          >
-            <LogOut className="w-5 h-5 text-stone-500" />
+            <Plus className="h-4 w-4" />
           </button>
         </div>
-      </div>
 
-      {/* Rooms grid */}
-      <div className="max-w-4xl mx-auto">
+        {/* Rooms grid */}
         {rooms.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-stone-500 mb-4">No rooms yet</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-stone-950 hover:border-stone-700 rounded-2xl border border-stone-800 text-white transition-colors"
+              className="text-sm text-stone-400 hover:text-white transition-colors"
             >
-              <Plus className="w-4 h-4" />
-              <span>Create your first room</span>
+              Create your first room
             </button>
           </div>
         ) : (

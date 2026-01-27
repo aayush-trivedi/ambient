@@ -44,10 +44,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="flex flex-col items-center gap-8">
-        <span className="text-4xl font-black text-white" style={{ fontFamily: 'var(--font-montserrat)', letterSpacing: '-0.10em' }}>
+        <span className="text-5xl font-black text-white" style={{ fontFamily: 'var(--font-montserrat)', letterSpacing: '-0.10em' }}>
           ambient
         </span>
-        <p className="text-sm text-stone-400">Always-on presence with the people you love</p>
+        <p className="text-sm text-stone-400">always on video calls</p>
 
         <div className="flex items-center gap-3">
           <span className="text-sm text-white">Sign in with</span>

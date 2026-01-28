@@ -23,6 +23,9 @@ export default function RoomPage() {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [copied, setCopied] = useState(false)
   const [participants, setParticipants] = useState<PresenceState[]>([])
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editingName, setEditingName] = useState('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   const peerRef = useRef<AmbientPeer | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -142,6 +145,52 @@ export default function RoomPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const startEditingName = () => {
+    if (room) {
+      setEditingName(room.name)
+      setIsEditingName(true)
+      setTimeout(() => nameInputRef.current?.focus(), 0)
+    }
+  }
+
+  const saveRoomName = async () => {
+    if (!editingName.trim() || !room) {
+      setIsEditingName(false)
+      return
+    }
+
+    const newName = editingName.trim()
+    if (newName === room.name) {
+      setIsEditingName(false)
+      return
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('rooms')
+      .update({ name: newName })
+      .eq('id', roomId)
+
+    if (!error) {
+      setRoom({ ...room, name: newName })
+      const existingTab = tabs.find((t) => t.roomId === roomId)
+      if (existingTab) {
+        updateTabTitle(existingTab.id, newName)
+      }
+    }
+    setIsEditingName(false)
+  }
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveRoomName()
+    } else if (e.key === 'Escape') {
+      setIsEditingName(false)
+    }
+  }
+
+  const isAlone = participants.length <= 1
+
   return (
     <div className="relative w-full h-full bg-black">
       <VideoGrid
@@ -150,6 +199,31 @@ export default function RoomPage() {
         state={state}
         partnerName="them"
       />
+
+      {/* Centered room name when alone */}
+      {isAlone && room && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {isEditingName ? (
+            <input
+              ref={nameInputRef}
+              type="text"
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              onBlur={saveRoomName}
+              onKeyDown={handleNameKeyDown}
+              className="text-4xl font-normal text-white bg-transparent text-center outline-none pointer-events-auto"
+              style={{ minWidth: '200px' }}
+            />
+          ) : (
+            <h1
+              onClick={startEditingName}
+              className="text-4xl font-normal text-white cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto"
+            >
+              {room.name}
+            </h1>
+          )}
+        </div>
+      )}
 
       {/* Top bar */}
       <div className="absolute top-6 right-6 flex items-center gap-3">
